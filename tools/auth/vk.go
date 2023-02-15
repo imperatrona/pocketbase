@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/vk"
 )
 
 // Vk Oauth docs: https://dev.vk.com/api/oauth-parameters
@@ -24,9 +25,9 @@ type Vk struct {
 // NewVkProvider creates new Vk provider instance with some defaults.
 func NewVkProvider() *Vk {
 	return &Vk{&baseProvider{
-		scopes:     []string{"read:user", "user:email"},
-		authUrl:    "https://oauth.vk.com/authorize?scope=email&v=5.131",
-		tokenUrl:   "https://oauth.vk.com/access_token?v=5.131",
+		scopes:     []string{"email"},
+		authUrl:    vk.Endpoint.AuthURL,
+		tokenUrl:   vk.Endpoint.TokenURL,
 		userApiUrl: "https://api.vk.com/method/users.get?fields=photo_max,screen_name&v=5.131",
 	}}
 }
