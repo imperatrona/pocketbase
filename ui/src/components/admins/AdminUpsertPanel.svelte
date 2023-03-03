@@ -142,10 +142,10 @@
 
     <form id={formId} class="grid" autocomplete="off" on:submit|preventDefault={save}>
         {#if !admin.isNew}
-            <Field class="form-field disabled" name="id" let:uniqueId>
+            <Field class="form-field readonly" name="id" let:uniqueId>
                 <label for={uniqueId}>
                     <i class={CommonHelper.getFieldTypeIcon("primary")} />
-                    <span class="txt">ID</span>
+                    <span class="txt">id</span>
                 </label>
                 <div class="form-field-addon">
                     <i
@@ -156,7 +156,7 @@
                         }}
                     />
                 </div>
-                <input type="text" id={uniqueId} value={admin.id} disabled />
+                <input type="text" id={uniqueId} value={admin.id} readonly />
             </Field>
         {/if}
 
@@ -233,7 +233,7 @@
 
     <svelte:fragment slot="footer">
         {#if !admin.isNew}
-            <button type="button" class="btn btn-sm btn-circle btn-transparent">
+            <button type="button" aria-label="More" class="btn btn-sm btn-circle btn-transparent">
                 <!-- empty span for alignment -->
                 <span />
                 <i class="ri-more-line" />

@@ -67,7 +67,7 @@ func TestSchemaFieldColDefinition(t *testing.T) {
 		},
 		{
 			schema.SchemaField{Type: schema.FieldTypeNumber, Name: "test"},
-			"REAL DEFAULT 0",
+			"NUMERIC DEFAULT 0",
 		},
 		{
 			schema.SchemaField{Type: schema.FieldTypeBool, Name: "test"},
@@ -509,7 +509,7 @@ func TestSchemaFieldInitOptions(t *testing.T) {
 		{
 			schema.SchemaField{Type: schema.FieldTypeRelation},
 			false,
-			`{"system":false,"id":"","name":"","type":"relation","required":false,"unique":false,"options":{"collectionId":"","cascadeDelete":false,"maxSelect":null,"displayFields":null}}`,
+			`{"system":false,"id":"","name":"","type":"relation","required":false,"unique":false,"options":{"collectionId":"","cascadeDelete":false,"minSelect":null,"maxSelect":null,"displayFields":null}}`,
 		},
 		{
 			schema.SchemaField{Type: schema.FieldTypeUser},
@@ -571,7 +571,7 @@ func TestSchemaFieldPrepareValue(t *testing.T) {
 		{schema.SchemaField{Type: schema.FieldTypeUrl}, "test", `"test"`},
 		{schema.SchemaField{Type: schema.FieldTypeUrl}, 123, `"123"`},
 
-		// text
+		// editor
 		{schema.SchemaField{Type: schema.FieldTypeEditor}, nil, `""`},
 		{schema.SchemaField{Type: schema.FieldTypeEditor}, "", `""`},
 		{schema.SchemaField{Type: schema.FieldTypeEditor}, []int{1, 2}, `""`},
@@ -580,10 +580,29 @@ func TestSchemaFieldPrepareValue(t *testing.T) {
 
 		// json
 		{schema.SchemaField{Type: schema.FieldTypeJson}, nil, "null"},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, "null", "null"},
 		{schema.SchemaField{Type: schema.FieldTypeJson}, 123, "123"},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, "123", "123"},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, 123.456, "123.456"},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, "123.456", "123.456"},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, "123.456 abc", `"123.456 abc"`}, // invalid numeric string
+		{schema.SchemaField{Type: schema.FieldTypeJson}, true, "true"},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, "true", "true"},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, false, "false"},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, "false", "false"},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, "", `""`},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, `test`, `"test"`},
 		{schema.SchemaField{Type: schema.FieldTypeJson}, `"test"`, `"test"`},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, `{test":1}`, `"{test\":1}"`}, // invalid object string
+		{schema.SchemaField{Type: schema.FieldTypeJson}, `[1 2 3]`, `"[1 2 3]"`},      // invalid array string
+		{schema.SchemaField{Type: schema.FieldTypeJson}, map[string]int{}, `{}`},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, `{}`, `{}`},
 		{schema.SchemaField{Type: schema.FieldTypeJson}, map[string]int{"test": 123}, `{"test":123}`},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, `{"test":123}`, `{"test":123}`},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, []int{}, `[]`},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, `[]`, `[]`},
 		{schema.SchemaField{Type: schema.FieldTypeJson}, []int{1, 2, 1}, `[1,2,1]`},
+		{schema.SchemaField{Type: schema.FieldTypeJson}, `[1,2,1]`, `[1,2,1]`},
 
 		// number
 		{schema.SchemaField{Type: schema.FieldTypeNumber}, nil, "0"},

@@ -1,5 +1,6 @@
 <script>
     import { replace, querystring } from "svelte-spa-router";
+    import CommonHelper from "@/utils/CommonHelper";
     import {
         collections,
         activeCollection,
@@ -16,18 +17,18 @@
     import CollectionUpsertPanel from "@/components/collections/CollectionUpsertPanel.svelte";
     import CollectionDocsPanel from "@/components/collections/CollectionDocsPanel.svelte";
     import RecordUpsertPanel from "@/components/records/RecordUpsertPanel.svelte";
+    import RecordPreviewPanel from "@/components/records/RecordPreviewPanel.svelte";
     import RecordsList from "@/components/records/RecordsList.svelte";
-
-    $pageTitle = "Collections";
 
     const queryParams = new URLSearchParams($querystring);
 
     let collectionUpsertPanel;
     let collectionDocsPanel;
-    let recordPanel;
+    let recordUpsertPanel;
+    let recordPreviewPanel;
     let recordsList;
     let filter = queryParams.get("filter") || "";
-    let sort = queryParams.get("sort") || "-created";
+    let sort = queryParams.get("sort") || "";
     let selectedCollectionId = queryParams.get("collectionId") || $activeCollection?.id;
 
     $: reactiveParams = new URLSearchParams($querystring);
@@ -55,10 +56,20 @@
         replace("/collections?" + query);
     }
 
+    $: $pageTitle = $activeCollection?.name || "Collections";
+
     function reset() {
-        selectedCollectionId = $activeCollection.id;
-        sort = "-created";
+        selectedCollectionId = $activeCollection?.id;
         filter = "";
+        sort = "-created";
+
+        // clear default sort if created field is not available
+        if (
+            $activeCollection?.isView &&
+            !CommonHelper.extractColumnsFromQuery($activeCollection.options.query).includes("created")
+        ) {
+            sort = "";
+        }
     }
 
     loadCollections(selectedCollectionId);
@@ -106,6 +117,7 @@
                 {#if !$hideControls}
                     <button
                         type="button"
+                        aria-label="Edit collection"
                         class="btn btn-transparent btn-circle"
                         use:tooltip={{ text: "Edit collection", position: "right" }}
                         on:click={() => collectionUpsertPanel?.show($activeCollection)}
@@ -127,10 +139,12 @@
                     <span class="txt">API Preview</span>
                 </button>
 
-                <button type="button" class="btn btn-expanded" on:click={() => recordPanel?.show()}>
-                    <i class="ri-add-line" />
-                    <span class="txt">New record</span>
-                </button>
+                {#if !$activeCollection.isView}
+                    <button type="button" class="btn btn-expanded" on:click={() => recordUpsertPanel?.show()}>
+                        <i class="ri-add-line" />
+                        <span class="txt">New record</span>
+                    </button>
+                {/if}
             </div>
         </header>
 
@@ -146,8 +160,12 @@
             collection={$activeCollection}
             bind:filter
             bind:sort
-            on:select={(e) => recordPanel?.show(e?.detail)}
-            on:new={() => recordPanel?.show()}
+            on:select={(e) => {
+                $activeCollection.isView
+                    ? recordPreviewPanel.show(e?.detail)
+                    : recordUpsertPanel?.show(e?.detail);
+            }}
+            on:new={() => recordUpsertPanel?.show()}
         />
     </PageWrapper>
 {/if}
@@ -157,8 +175,10 @@
 <CollectionDocsPanel bind:this={collectionDocsPanel} />
 
 <RecordUpsertPanel
-    bind:this={recordPanel}
+    bind:this={recordUpsertPanel}
     collection={$activeCollection}
     on:save={() => recordsList?.reloadLoadedPages()}
     on:delete={() => recordsList?.reloadLoadedPages()}
 />
+
+<RecordPreviewPanel bind:this={recordPreviewPanel} collection={$activeCollection} />

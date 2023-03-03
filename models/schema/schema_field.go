@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"regexp"
+	"strconv"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -138,7 +139,7 @@ type SchemaField struct {
 func (f *SchemaField) ColDefinition() string {
 	switch f.Type {
 	case FieldTypeNumber:
-		return "REAL DEFAULT 0"
+		return "NUMERIC DEFAULT 0"
 	case FieldTypeBool:
 		return "BOOLEAN DEFAULT FALSE"
 	case FieldTypeJson:
@@ -279,7 +280,35 @@ func (f *SchemaField) PrepareValue(value any) any {
 	case FieldTypeText, FieldTypeEmail, FieldTypeUrl, FieldTypeEditor:
 		return cast.ToString(value)
 	case FieldTypeJson:
-		val, _ := types.ParseJsonRaw(value)
+		val := value
+
+		if str, ok := val.(string); ok {
+			// in order to support seamlessly both json and multipart/form-data requests,
+			// the following normalization rules are applied for plain string values:
+			// - "true" is converted to the json `true`
+			// - "false" is converted to the json `false`
+			// - "null" is converted to the json `null`
+			// - "[1,2,3]" is converted to the json `[1,2,3]`
+			// - "{\"a\":1,\"b\":2}" is converted to the json `{"a":1,"b":2}`
+			// - numeric strings are converted to json number
+			// - double quoted strings are left as they are (aka. without normalizations)
+			// - any other string (empty string too) is double quoted
+			if str == "" {
+				val = strconv.Quote(str)
+			} else if str == "null" || str == "true" || str == "false" {
+				val = str
+			} else if ((str[0] >= '0' && str[0] <= '9') ||
+				str[0] == '"' ||
+				str[0] == '[' ||
+				str[0] == '{') &&
+				is.JSON.Validate(str) == nil {
+				val = str
+			} else {
+				val = strconv.Quote(str)
+			}
+		}
+
+		val, _ = types.ParseJsonRaw(val)
 		return val
 	case FieldTypeNumber:
 		return cast.ToFloat64(value)
@@ -357,8 +386,7 @@ func (f *SchemaField) PrepareValueWithModifier(baseValue any, modifier string, m
 		}
 	case FieldTypeFile:
 		// note: file for now supports only the subtract modifier
-		switch modifier {
-		case FieldValueModifierSubtract:
+		if modifier == FieldValueModifierSubtract {
 			resolvedValue = list.SubtractSlice(
 				list.ToUniqueStringSlice(baseValue),
 				list.ToUniqueStringSlice(modifierValue),
@@ -575,6 +603,12 @@ type RelationOptions struct {
 	// in case of delete of all linked relations.
 	CascadeDelete bool `form:"cascadeDelete" json:"cascadeDelete"`
 
+	// MinSelect indicates the min number of allowed relation records
+	// that could be linked to the main model.
+	//
+	// If nil no limits are applied.
+	MinSelect *int `form:"minSelect" json:"minSelect"`
+
 	// MaxSelect indicates the max number of allowed relation records
 	// that could be linked to the main model.
 	//
@@ -586,9 +620,15 @@ type RelationOptions struct {
 }
 
 func (o RelationOptions) Validate() error {
+	minVal := 0
+	if o.MinSelect != nil {
+		minVal = *o.MinSelect
+	}
+
 	return validation.ValidateStruct(&o,
 		validation.Field(&o.CollectionId, validation.Required),
-		validation.Field(&o.MaxSelect, validation.NilOrNotEmpty, validation.Min(1)),
+		validation.Field(&o.MinSelect, validation.NilOrNotEmpty, validation.Min(1)),
+		validation.Field(&o.MaxSelect, validation.NilOrNotEmpty, validation.Min(minVal)),
 	)
 }
 

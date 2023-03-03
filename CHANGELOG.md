@@ -1,28 +1,128 @@
-## (WIP) v0.12.0
+## v0.13.0
+
+- Added new "View" collection type allowing you to create a read-only collection from a custom SQL `SELECT` statement. It supports:
+  - aggregations (`COUNT()`, `MIN()`, `MAX()`, `GROUP BY`, etc.)
+  - column and table aliases
+  - CTEs and subquery expressions
+  - auto `relation` fields association
+  - `file` fields proxying (up to 5 linked relations, eg. view1->view2->...->base)
+  - `filter`, `sort` and `expand`
+  - List and View API rules
+
+- Added auto fail/retry (default to 8 attempts) for the `SELECT` queries to gracefully handle the `database is locked` errors ([#1795](https://github.com/pocketbase/pocketbase/discussions/1795#discussioncomment-4882169)).
+  _The default max attempts can be accessed or changed via `Dao.MaxLockRetries`._
+
+- Added default max query execution timeout (30s).
+  _The default timeout can be accessed or changed via `Dao.ModelQueryTimeout`._
+  _For the prebuilt executables it can be also changed via the `--queryTimeout=10` flag._
+
+- Added support for `dao.RecordQuery(collection)` to scan directly the `One()` and `All()` results in `*models.Record` or `[]*models.Record` without the need of explicit `NullStringMap`.
+
+- Added support to overwrite the default file serve headers if an explicit response header is set.
+
+- Added file thumbs when visualizing `relation` display file fields.
+
+- Added "Min select" `relation` field option.
+
+- Enabled `process.env` in JS migrations to allow accessing `os.Environ()`.
+
+- Added `UploadedFiles` field to the `RecordCreateEvent` and `RecordUpdateEvent` event structs.
+
+- **!** Moved file upload after the record persistent to allow setting custom record id safely from the `OnModelBeforeCreate` hook.
+
+- **!** Changed `System.GetFile()` to return directly `*blob.Reader` instead of the `io.ReadCloser` interface.
+
+- **!** Changed `To`, `Cc` and `Bcc` of `mailer.Message` to `[]mail.Address` for consistency and to allow multiple recipients and optional name.
+
+    If you are sending custom emails, you'll have to replace:
+    ```go
+    message := &mailer.Message{
+      ...
+
+      // (old) To: mail.Address{Address: "to@example.com"}
+      To: []mail.Address{{Address: "to@example.com", Name: "Some optional name"}},
+
+      // (old) Cc: []string{"cc@example.com"}
+      Cc: []mail.Address{{Address: "cc@example.com", Name: "Some optional name"}},
+
+      // (old) Bcc: []string{"bcc@example.com"}
+      Bcc: []mail.Address{{Address: "bcc@example.com", Name: "Some optional name"}},
+
+      ...
+    }
+    ```
+
+- **!** Refactored the Authentik integration as a more generic "OpenID Connect" provider (`oidc`) to support any OIDC provider (Okta, Keycloak, etc.).
+  _If you've previously used Authentik, make sure to rename the provider key in your code to `oidc`._
+  _To enable more than one OIDC provider you can use the additional `oidc2` and `oidc3` provider keys._
+
+- **!** Removed the previously deprecated `Dao.Block()` and `Dao.Continue()` helpers in favor of `Dao.NonconcurrentDB()`.
+
+- Updated the internal redirects to allow easier subpath deployment when behind a reverse proxy.
+
+- Other minor Admin UI improvements.
+
+
+## v0.12.3
+
+- Fixed "Toggle column" reactivity when navigating between collections ([#1836](https://github.com/pocketbase/pocketbase/pull/1836)).
+
+- Logged the current datetime on server start ([#1822](https://github.com/pocketbase/pocketbase/issues/1822)).
+
+
+## v0.12.2
+
+- Fixed the "Clear" button of the datepicker component not clearing the value ([#1730](https://github.com/pocketbase/pocketbase/discussions/1730)).
+
+- Increased slightly the fields contrast ([#1742](https://github.com/pocketbase/pocketbase/issues/1742)).
+
+- Auto close the multi-select dropdown if "Max select" is reached.
+
+
+## v0.12.1
+
+- Fixed js error on empty relation save.
+
+- Fixed `overlay-active` css class not being removed on nested overlay panel close ([#1718](https://github.com/pocketbase/pocketbase/issues/1718)).
+
+- Added the collection name in the page title ([#1711](https://github.com/pocketbase/pocketbase/issues/1711)).
+
+
+## v0.12.0
+
+- Refactored the relation picker UI to allow server-side search, sort, create, update and delete of relation records ([#976](https://github.com/pocketbase/pocketbase/issues/976)).
+
+- Added new `RelationOptions.DisplayFields` option to specify custom relation field(s) visualization in the Admin UI.
+
+- Added Authentik OAuth2 provider ([#1377](https://github.com/pocketbase/pocketbase/pull/1377); thanks @pr0ton11).
+
+- Added LiveChat OAuth2 provider ([#1573](https://github.com/pocketbase/pocketbase/pull/1573); thanks @mariosant).
+
+- Added Gitea OAuth2 provider ([#1643](https://github.com/pocketbase/pocketbase/pull/1643); thanks @hlanderdev).
 
 - Added PDF file previews ([#1548](https://github.com/pocketbase/pocketbase/pull/1548); thanks @mjadobson).
 
 - Added video and audio file previews.
 
+- Added rich text editor (`editor`) field for HTML content based on TinyMCE ([#370](https://github.com/pocketbase/pocketbase/issues/370)).
+  _Currently the new field doesn't have any configuration options or validations but this may change in the future depending on how devs ended up using it._
+
+- Added "Duplicate" Collection and Record options in the Admin UI ([#1656](https://github.com/pocketbase/pocketbase/issues/1656)).
+
 - Added `filesystem.GetFile()` helper to read files through the FileSystem abstraction ([#1578](https://github.com/pocketbase/pocketbase/pull/1578); thanks @avarabyeu).
 
-- Added LiveChat OAuth2 provider ([#1573](https://github.com/pocketbase/pocketbase/pull/1573); thanks @mariosant).
-
-- Added Authentik OAuth2 provider ([#1377](https://github.com/pocketbase/pocketbase/pull/1377); thanks @pr0ton11).
-
-- Added Gitea OAuth2 provider ([#1643](https://github.com/pocketbase/pocketbase/pull/1643); thanks @hlanderdev).
-
-- Added rich text editor (`editor`) field for HTML content based on TinyMCE ([#370](https://github.com/pocketbase/pocketbase/issues/370)).
-
-- Added new event hooks:
+- Added new auth event hooks for finer control and more advanced auth scenarios handling:
 
   ```go
+  // auth record
   OnRecordBeforeAuthWithPasswordRequest()
   OnRecordAfterAuthWithPasswordRequest()
   OnRecordBeforeAuthWithOAuth2Request()
   OnRecordAfterAuthWithOAuth2Request()
   OnRecordBeforeAuthRefreshRequest()
   OnRecordAfterAuthRefreshRequest()
+
+  // admin
   OnAdminBeforeAuthWithPasswordRequest()
   OnAdminAfterAuthWithPasswordRequest()
   OnAdminBeforeAuthRefreshRequest()
@@ -33,21 +133,13 @@
   OnAdminAfterConfirmPasswordResetRequest()
   ```
 
-- Refactored all `forms` Submit interceptors to use a Generic data type as their payload.
+- Added `models.Record.CleanCopy()` helper that creates a new record copy with only the latest data state of the existing one and all other options reset to their defaults.
 
 - Added new helper `apis.RecordAuthResponse(app, httpContext, record, meta)` to return a standard Record auth API response ([#1623](https://github.com/pocketbase/pocketbase/issues/1623)).
 
-- Added optional `RelationOptions.DisplayFields` slice to support custom relation field(s) visualization in the Admin UI.
-
-- Refactored the relation picker UI, allowing inline search, sorting, create, update and delete of relation records.
-
-- Added "Duplicate" Collection and Record option in the Admin UI ([#1656](https://github.com/pocketbase/pocketbase/issues/1656)).
-
-- Improved API and validations error reporting by providing more detailed messages.
-
 - Refactored `models.Record` expand and data change operations to be concurrent safe.
 
-- Added `models.Record.CleanCopy()` helper that creates a new record copy with only the latest data state of the existing one and all other options reset to their defaults.
+- Refactored all `forms` Submit interceptors to use a generic data type as their payload.
 
 - Added several `store.Store` helpers:
   ```go
@@ -56,7 +148,41 @@
   store.GetAll() map[string]T
   ```
 
-- Added tagged/proxy hook for all Record and Model events (@todo document).
+- Added "tags" support for all Record and Model related event hooks.
+
+    The "tags" allow registering event handlers that will be called only on matching table name(s) or colleciton id(s)/name(s).
+    For example:
+    ```go
+    app.OnRecordBeforeCreateRequest("articles").Add(func(e *core.RecordCreateEvent) error {
+      // called only on "articles" record creation
+      log.Println(e.Record)
+      return nil
+    })
+    ```
+    For all those event hooks `*hook.Hook` was replaced with `*hooks.TaggedHook`, but the hook methods signatures are the same so it should behave as it was previously if no tags were specified.
+
+- **!** Fixed the `json` field **string** value normalization ([#1703](https://github.com/pocketbase/pocketbase/issues/1703)).
+
+    In order to support seamlessly both `application/json` and `multipart/form-data`
+    requests, the following normalization rules are applied if the `json` field is a
+    **plain string value**:
+
+    - "true" is converted to the json `true`
+    - "false" is converted to the json `false`
+    - "null" is converted to the json `null`
+    - "[1,2,3]" is converted to the json `[1,2,3]`
+    - "{\"a\":1,\"b\":2}" is converted to the json `{"a":1,"b":2}`
+    - numeric strings are converted to json number
+    - double quoted strings are left as they are (aka. without normalizations)
+    - any other string (empty string too) is double quoted
+
+    Additionally, the "Nonempty" `json` field constraint now checks for `null`, `[]`, `{}` and `""` (empty string).
+
+- Added `aria-label` to some of the buttons in the Admin UI for better accessibility ([#1702](https://github.com/pocketbase/pocketbase/pull/1702); thanks @ndarilek).
+
+- Updated the filename extension checks in the Admin UI to be case-insensitive ([#1707](https://github.com/pocketbase/pocketbase/pull/1707); thanks @hungcrush).
+
+- Other minor improvements (more detailed API file upload errors, UI optimizations, docs improvements, etc.)
 
 
 ## v0.11.4

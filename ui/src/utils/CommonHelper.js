@@ -475,11 +475,12 @@ export default class CommonHelper {
     /**
      * Truncates the provided text to the specified max characters length.
      *
-     * @param  {String} str
-     * @param  {Number} length
+     * @param  {String}  str
+     * @param  {Number}  [length]
+     * @param  {Boolean} [dots]
      * @return {String}
      */
-    static truncate(str, length = 150, dots = false) {
+    static truncate(str, length = 150, dots = true) {
         str = str || "";
 
         if (str.length <= length) {
@@ -629,6 +630,29 @@ export default class CommonHelper {
     }
 
     /**
+     * Extract the user initials from the provided username or email address
+     * (eg. converts "john.doe@example.com" to "JD").
+     *
+     * @param  {String} str
+     * @return {String}
+     */
+    static getInitials(str) {
+        str = (str || '').split('@')[0].trim();
+
+        if (str.length <= 2) {
+            return str.toUpperCase();
+        }
+
+        const parts = str.split(/[\.\_\-\ ]/);
+
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+
+        return str[0].toUpperCase();
+    }
+
+    /**
      * Returns a DateTime instance from a date object/string.
      *
      * @param  {String|Date} date
@@ -734,7 +758,7 @@ export default class CommonHelper {
      * @return {Boolean}
      */
     static hasImageExtension(filename) {
-        return !!imageExtensions.find((ext) => filename.endsWith(ext));
+        return !!imageExtensions.find((ext) => filename.toLowerCase().endsWith(ext));
     }
 
     /**
@@ -744,7 +768,7 @@ export default class CommonHelper {
      * @return {Boolean}
      */
     static hasVideoExtension(filename) {
-        return !!videoExtensions.find((ext) => filename.endsWith(ext));
+        return !!videoExtensions.find((ext) => filename.toLowerCase().endsWith(ext));
     }
 
     /**
@@ -754,7 +778,7 @@ export default class CommonHelper {
      * @return {Boolean}
      */
     static hasAudioExtension(filename) {
-        return !!audioExtensions.find((ext) => filename.endsWith(ext));
+        return !!audioExtensions.find((ext) => filename.toLowerCase().endsWith(ext));
     }
 
     /**
@@ -764,7 +788,7 @@ export default class CommonHelper {
      * @return {Boolean}
      */
     static hasDocumentExtension(filename) {
-        return !!documentExtensions.find((ext) => filename.endsWith(ext));
+        return !!documentExtensions.find((ext) => filename.toLowerCase().endsWith(ext));
     }
 
     /**
@@ -871,8 +895,6 @@ export default class CommonHelper {
             "id": "RECORD_ID",
             "collectionId": collection?.id,
             "collectionName": collection?.name,
-            "created": "2022-01-01 01:00:00.123Z",
-            "updated": "2022-01-01 23:59:59.456Z",
         };
 
         if (collection?.isAuth) {
@@ -880,6 +902,16 @@ export default class CommonHelper {
             dummy["verified"] = false;
             dummy["emailVisibility"] = true;
             dummy["email"] = "test@example.com";
+        }
+
+        const hasCreated = !collection?.isView || CommonHelper.extractColumnsFromQuery(collection?.options?.query).includes("created");
+        if (hasCreated) {
+            dummy["created"] = "2022-01-01 01:00:00.123Z";
+        }
+
+        const hasUpdated = !collection?.isView || CommonHelper.extractColumnsFromQuery(collection?.options?.query).includes("updated");
+        if (hasUpdated) {
+            dummy["updated"] = "2022-01-01 23:59:59.456Z";
         }
 
         for (const field of fields) {
@@ -979,8 +1011,8 @@ export default class CommonHelper {
         switch (type?.toLowerCase()) {
             case "auth":
                 return "ri-group-line";
-            case "single":
-                return "ri-file-list-2-line";
+            case "view":
+                return "ri-table-line";
             default:
                 return "ri-folder-2-line";
         }
@@ -1065,7 +1097,11 @@ export default class CommonHelper {
             return "false";
         }
 
-        // array value
+        if (field?.type === "json") {
+            return 'null, "", [], {}';
+        }
+
+        // arrayable fields
         if (["select", "relation", "file"].includes(field?.type) && field?.options?.maxSelect != 1) {
             return "[]";
         }
@@ -1140,27 +1176,27 @@ export default class CommonHelper {
     }
 
     /**
-     * Groups and sorts collections array by type (auth, single, base).
+     * Groups and sorts collections array by type (auth, base, view).
      *
      * @param  {Array} collections
      * @return {Array}
      */
     static sortCollections(collections = []) {
-        const authCollections = [];
-        const singleCollections = [];
-        const baseCollections = [];
+        const auth = [];
+        const base = [];
+        const view = [];
 
         for (const collection of collections) {
             if (collection.type === 'auth') {
-                authCollections.push(collection);
-            } else if (collection.type === 'single') {
-                singleCollections.push(collection);
+                auth.push(collection);
+            } else if (collection.type === 'base') {
+                base.push(collection);
             } else {
-                baseCollections.push(collection);
+                view.push(collection);
             }
         }
 
-        return [].concat(authCollections, singleCollections, baseCollections);
+        return [].concat(auth, base, view);
     }
 
 
@@ -1208,7 +1244,6 @@ export default class CommonHelper {
             max_height: 700,
             autoresize_bottom_margin: 30,
             skin: "pocketbase",
-            content_css: "pocketbase",
             content_style: "body { font-size: 14px }",
             plugins: [
                 "autoresize",
@@ -1218,7 +1253,6 @@ export default class CommonHelper {
                 "image",
                 "searchreplace",
                 "fullscreen",
-                "insertdatetime",
                 "media",
                 "table",
                 "code",
@@ -1315,5 +1349,77 @@ export default class CommonHelper {
         }
 
         return missingValue;
+    }
+
+    /**
+     * Rudimentary SELECT query columns extractor.
+     * Returns an array with the identifier aliases
+     * (expressions wrapped in parenthesis are skipped).
+     *
+     * @param  {String} selectQuery
+     * @return {Array}
+     */
+    static extractColumnsFromQuery(selectQuery) {
+        const groupReplacement = "__GROUP__";
+
+        selectQuery = (selectQuery || "").
+            // replace parenthesis/group expessions
+            replace(/\([\s\S]+?\)/gm, groupReplacement).
+            // replace multi-whitespace characters with single space
+            replace(/[\t\r\n]|(?:\s\s)+/g, " ");
+
+        const match = selectQuery.match(/select\s+([\s\S]+)\s+from/);
+
+        const expressions = match?.[1]?.split(",") || [];
+
+        const result = [];
+
+        for (let expr of expressions) {
+            const column = expr.trim().split(" ").pop(); // get only the alias
+            if (column != "" && column != groupReplacement) {
+                result.push(column.replace(/[\'\"\`\[\]\s]/g, ""));
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns an array with all public collection identifiers (schema + type specific fields).
+     *
+     * @param  {[type]} collection The collection to extract identifiers from.
+     * @param  {String} prefix     Optional prefix for each found identified.
+     * @return {Array}
+     */
+    static getAllCollectionIdentifiers(collection, prefix = "") {
+        if (!collection) {
+            return;
+        }
+
+        let result = [prefix + "id"];
+
+        if (collection.isView) {
+            for (let col of CommonHelper.extractColumnsFromQuery(collection.options.query)) {
+                CommonHelper.pushUnique(result, prefix + col);
+            }
+        } else if (collection.isAuth) {
+            result.push(prefix + "username");
+            result.push(prefix + "email");
+            result.push(prefix + "emailVisibility");
+            result.push(prefix + "verified");
+            result.push(prefix + "created");
+            result.push(prefix + "updated");
+        } else {
+            result.push(prefix + "created");
+            result.push(prefix + "updated");
+        }
+
+        const schema = collection.schema || [];
+
+        for (const field of schema) {
+            CommonHelper.pushUnique(result, prefix + field.name);
+        }
+
+        return result;
     }
 }

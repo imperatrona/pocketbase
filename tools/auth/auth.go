@@ -112,12 +112,16 @@ func NewProviderByName(name string) (Provider, error) {
 		return NewGiteeProvider(), nil
 	case NameLivechat:
 		return NewLivechatProvider(), nil
-	case NameAuthentik:
-		return NewAuthentikProvider(), nil
 	case NameGitea:
 		return NewGiteaProvider(), nil
 	case NameVk:
 		return NewVkProvider(), nil
+	case NameOIDC:
+		return NewOIDCProvider(), nil
+	case NameOIDC + "2":
+		return NewOIDCProvider(), nil
+	case NameOIDC + "3":
+		return NewOIDCProvider(), nil
 	default:
 		return nil, errors.New("Missing provider " + name)
 	}
