@@ -66,6 +66,10 @@ export default {
         icon:  "ri-cup-fill",
         optionsComponent: SelfHostedOptions,
     },
+    vkAuth: {
+        title: "Vk",
+        icon: "ri-bug-fill",
+    },
     livechatAuth: {
         title: "LiveChat",
         icon:  "ri-chat-1-fill",

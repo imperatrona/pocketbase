@@ -114,6 +114,8 @@ func NewProviderByName(name string) (Provider, error) {
 		return NewLivechatProvider(), nil
 	case NameGitea:
 		return NewGiteaProvider(), nil
+	case NameVk:
+		return NewVkProvider(), nil
 	case NameOIDC:
 		return NewOIDCProvider(), nil
 	case NameOIDC + "2":
