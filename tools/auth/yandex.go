@@ -19,6 +19,8 @@ type Yandex struct {
 
 // NewYandexProvider creates new Yandex provider instance with some defaults.
 func NewYandexProvider() *Yandex {
+	// https://yandex.ru/dev/id/doc/en/
+	// https://yandex.ru/dev/id/doc/en/user-information
 	return &Yandex{&baseProvider{
 		scopes:     []string{"login:email", "login:avatar", "login:info"},
 		authUrl:    yandex.Endpoint.AuthURL,
@@ -29,7 +31,7 @@ func NewYandexProvider() *Yandex {
 
 // FetchAuthUser returns an AuthUser instance based on Yandex's user api.
 //
-// API reference: http://dev-id.docs-viewer.yandex.ru/ru/user-information
+// API reference: https://yandex.ru/dev/id/doc/en/user-information#response-format
 func (p *Yandex) FetchAuthUser(token *oauth2.Token) (*AuthUser, error) {
 	data, err := p.FetchRawUserData(token)
 	if err != nil {
@@ -42,11 +44,11 @@ func (p *Yandex) FetchAuthUser(token *oauth2.Token) (*AuthUser, error) {
 	}
 
 	extracted := struct {
-		Id        string `json:"id"`
-		Name      string `json:"real_name"`
-		Username  string `json:"login"`
-		Email     string `json:"default_email"`
-		AvatarUrl string `json:"default_avatar_id"`
+		Id       string `json:"id"`
+		Name     string `json:"real_name"`
+		Username string `json:"login"`
+		Email    string `json:"default_email"`
+		AvatarId string `json:"default_avatar_id"`
 	}{}
 	if err := json.Unmarshal(data, &extracted); err != nil {
 		return nil, err
@@ -57,7 +59,7 @@ func (p *Yandex) FetchAuthUser(token *oauth2.Token) (*AuthUser, error) {
 		Name:         extracted.Name,
 		Username:     extracted.Username,
 		Email:        extracted.Email,
-		AvatarUrl:    "https://avatars.yandex.net/get-yapic/" + extracted.AvatarUrl + "/islands-200",
+		AvatarUrl:    "https://avatars.yandex.net/get-yapic/" + extracted.AvatarId + "/islands-200",
 		RawUser:      rawUser,
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
