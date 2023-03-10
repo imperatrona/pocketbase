@@ -70,6 +70,10 @@ export default {
         title: "LiveChat",
         icon:  "ri-chat-1-fill",
     },
+    yandexAuth: {
+        title: "Yandex",
+        icon:  "ri-lock-fill",
+    },
     oidcAuth: {
         title: "OpenID Connect (Authentik, Keycloak, Okta, ...)",
         icon:  "ri-lock-fill",

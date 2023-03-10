@@ -57,6 +57,8 @@ func TestSettingsValidate(t *testing.T) {
 	s.LivechatAuth.ClientId = ""
 	s.GiteaAuth.Enabled = true
 	s.GiteaAuth.ClientId = ""
+	s.YandexAuth.Enabled = true
+	s.YandexAuth.ClientId = ""
 	s.OIDCAuth.Enabled = true
 	s.OIDCAuth.ClientId = ""
 	s.OIDC2Auth.Enabled = true
@@ -95,6 +97,7 @@ func TestSettingsValidate(t *testing.T) {
 		`"giteeAuth":{`,
 		`"livechatAuth":{`,
 		`"giteaAuth":{`,
+		`"yandexAuth":{`,
 		`"oidcAuth":{`,
 		`"oidc2Auth":{`,
 		`"oidc3Auth":{`,
@@ -154,6 +157,8 @@ func TestSettingsMerge(t *testing.T) {
 	s2.LivechatAuth.ClientId = "livechat_test"
 	s2.GiteaAuth.Enabled = true
 	s2.GiteaAuth.ClientId = "gitea_test"
+	s2.YandexAuth.Enabled = true
+	s2.YandexAuth.ClientId = "yandex_test"
 	s2.OIDCAuth.Enabled = true
 	s2.OIDCAuth.ClientId = "oidc_test"
 	s2.OIDC2Auth.Enabled = true
@@ -240,6 +245,7 @@ func TestSettingsRedactClone(t *testing.T) {
 	s1.GiteeAuth.ClientSecret = testSecret
 	s1.LivechatAuth.ClientSecret = testSecret
 	s1.GiteaAuth.ClientSecret = testSecret
+	s1.YandexAuth.ClientSecret = testSecret
 	s1.OIDCAuth.ClientSecret = testSecret
 	s1.OIDC2Auth.ClientSecret = testSecret
 	s1.OIDC3Auth.ClientSecret = testSecret
@@ -294,6 +300,7 @@ func TestNamedAuthProviderConfigs(t *testing.T) {
 	s.GiteeAuth.ClientId = "gitee_test"
 	s.LivechatAuth.ClientId = "livechat_test"
 	s.GiteaAuth.ClientId = "gitea_test"
+	s.YandexAuth.ClientId = "yandex_test"
 	s.OIDCAuth.ClientId = "oidc_test"
 	s.OIDC2Auth.ClientId = "oidc2_test"
 	s.OIDC3Auth.ClientId = "oidc3_test"
@@ -321,6 +328,7 @@ func TestNamedAuthProviderConfigs(t *testing.T) {
 		`"gitee":{"enabled":false,"clientId":"gitee_test"`,
 		`"livechat":{"enabled":false,"clientId":"livechat_test"`,
 		`"gitea":{"enabled":false,"clientId":"gitea_test"`,
+		`"yandex":{"enabled":false,"clientId":"yandex_test"`,
 		`"oidc":{"enabled":false,"clientId":"oidc_test"`,
 		`"oidc2":{"enabled":false,"clientId":"oidc2_test"`,
 		`"oidc3":{"enabled":false,"clientId":"oidc3_test"`,
