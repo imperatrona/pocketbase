@@ -1,4 +1,4 @@
-module github.com/imperatrona/pocketbase
+module github.com/pocketbase/pocketbase
 
 go 1.18
 
