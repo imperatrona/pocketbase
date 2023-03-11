@@ -129,17 +129,28 @@ func (api *recordAuthApi) authMethods(c echo.Context) error {
 		codeVerifier := security.RandomString(43)
 		codeChallenge := security.S256Challenge(codeVerifier)
 		codeChallengeMethod := "S256"
+
+		var authUrl string
+		if name == "vk" {
+			authUrl = provider.BuildAuthUrl(
+				state,
+			)
+		} else {
+			authUrl = provider.BuildAuthUrl(
+				state,
+				oauth2.SetAuthURLParam("code_challenge", codeChallenge),
+				oauth2.SetAuthURLParam("code_challenge_method", codeChallengeMethod),
+			)
+		}
+		authUrl += "&redirect_uri=" // empty redirect_uri so that users can append their url
+
 		result.AuthProviders = append(result.AuthProviders, providerInfo{
 			Name:                name,
 			State:               state,
 			CodeVerifier:        codeVerifier,
 			CodeChallenge:       codeChallenge,
 			CodeChallengeMethod: codeChallengeMethod,
-			AuthUrl: provider.BuildAuthUrl(
-				state,
-				oauth2.SetAuthURLParam("code_challenge", codeChallenge),
-				oauth2.SetAuthURLParam("code_challenge_method", codeChallengeMethod),
-			) + "&redirect_uri=", // empty redirect_uri so that users can append their url
+			AuthUrl:             authUrl,
 		})
 	}
 
