@@ -116,6 +116,8 @@ func NewProviderByName(name string) (Provider, error) {
 		return NewGiteaProvider(), nil
 	case NameVk:
 		return NewVkProvider(), nil
+	case NameYandex:
+		return NewYandexProvider(), nil
 	case NameOIDC:
 		return NewOIDCProvider(), nil
 	case NameOIDC + "2":
