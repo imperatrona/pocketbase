@@ -66,17 +66,17 @@ export default {
         icon: "ri-cup-fill",
         optionsComponent: SelfHostedOptions,
     },
-    vkAuth: {
-        title: "Vk",
-        icon: "ri-lock-fill",
-    },
     livechatAuth: {
         title: "LiveChat",
         icon: "ri-chat-1-fill",
     },
+    vkAuth: {
+        title: "Vk",
+        icon: "ri-lock-fill",
+    },
     yandexAuth: {
         title: "Yandex",
-        icon:  "ri-lock-fill",
+        icon: "ri-lock-fill",
     },
     oidcAuth: {
         title: "OpenID Connect (Authentik, Keycloak, Okta, ...)",
