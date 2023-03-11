@@ -68,7 +68,7 @@ export default {
     },
     vkAuth: {
         title: "Vk",
-        icon: "ri-vk-fill",
+        icon: "ri-lock-fill",
     },
     livechatAuth: {
         title: "LiveChat",
