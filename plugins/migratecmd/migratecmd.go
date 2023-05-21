@@ -17,7 +17,6 @@ package migratecmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -123,14 +122,18 @@ func (p *plugin) createCommand() *cobra.Command {
 - down [number] - reverts the last [number] applied migrations
 - create name   - creates new blank migration template file
 - collections   - creates new migration file with snapshot of the local collections configuration
+- history-sync  - ensures that the _migrations history table doesn't have references to deleted migration files
 `
 
 	command := &cobra.Command{
 		Use:       "migrate",
 		Short:     "Executes app DB migration scripts",
-		ValidArgs: []string{"up", "down", "create", "collections"},
 		Long:      cmdDesc,
-		Run: func(command *cobra.Command, args []string) {
+		ValidArgs: []string{"up", "down", "create", "collections"},
+		// prevents printing the error log twice
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		RunE: func(command *cobra.Command, args []string) error {
 			cmd := ""
 			if len(args) > 0 {
 				cmd = args[0]
@@ -139,22 +142,24 @@ func (p *plugin) createCommand() *cobra.Command {
 			switch cmd {
 			case "create":
 				if err := p.migrateCreateHandler("", args[1:], true); err != nil {
-					log.Fatal(err)
+					return err
 				}
 			case "collections":
 				if err := p.migrateCollectionsHandler(args[1:], true); err != nil {
-					log.Fatal(err)
+					return err
 				}
 			default:
 				runner, err := migrate.NewRunner(p.app.DB(), migrations.AppMigrations)
 				if err != nil {
-					log.Fatal(err)
+					return err
 				}
 
 				if err := runner.Run(args...); err != nil {
-					log.Fatal(err)
+					return err
 				}
 			}
+
+			return nil
 		},
 	}
 
