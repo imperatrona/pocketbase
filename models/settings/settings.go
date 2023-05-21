@@ -56,6 +56,8 @@ type Settings struct {
 	GiteeAuth     AuthProviderConfig `form:"giteeAuth" json:"giteeAuth"`
 	LivechatAuth  AuthProviderConfig `form:"livechatAuth" json:"livechatAuth"`
 	GiteaAuth     AuthProviderConfig `form:"giteaAuth" json:"giteaAuth"`
+	VkAuth     AuthProviderConfig `form:"vkAuth" json:"vkAuth"`
+	YandexAuth    AuthProviderConfig `form:"yandexAuth" json:"yandexAuth"`
 	OIDCAuth      AuthProviderConfig `form:"oidcAuth" json:"oidcAuth"`
 	OIDC2Auth     AuthProviderConfig `form:"oidc2Auth" json:"oidc2Auth"`
 	OIDC3Auth     AuthProviderConfig `form:"oidc3Auth" json:"oidc3Auth"`
@@ -163,6 +165,12 @@ func New() *Settings {
 		GiteaAuth: AuthProviderConfig{
 			Enabled: false,
 		},
+		VkAuth: AuthProviderConfig{
+			Enabled: false,
+		},
+		YandexAuth: AuthProviderConfig{
+			Enabled: false,
+		},
 		OIDCAuth: AuthProviderConfig{
 			Enabled: false,
 		},
@@ -211,6 +219,8 @@ func (s *Settings) Validate() error {
 		validation.Field(&s.GiteeAuth),
 		validation.Field(&s.LivechatAuth),
 		validation.Field(&s.GiteaAuth),
+		validation.Field(&s.VkAuth),
+		validation.Field(&s.YandexAuth),
 		validation.Field(&s.OIDCAuth),
 		validation.Field(&s.OIDC2Auth),
 		validation.Field(&s.OIDC3Auth),
@@ -274,6 +284,8 @@ func (s *Settings) RedactClone() (*Settings, error) {
 		&clone.GiteeAuth.ClientSecret,
 		&clone.LivechatAuth.ClientSecret,
 		&clone.GiteaAuth.ClientSecret,
+		&clone.VkAuth.ClientSecret,
+		&clone.YandexAuth.ClientSecret,
 		&clone.OIDCAuth.ClientSecret,
 		&clone.OIDC2Auth.ClientSecret,
 		&clone.OIDC3Auth.ClientSecret,
@@ -311,6 +323,8 @@ func (s *Settings) NamedAuthProviderConfigs() map[string]AuthProviderConfig {
 		auth.NameGitee:      s.GiteeAuth,
 		auth.NameLivechat:   s.LivechatAuth,
 		auth.NameGitea:      s.GiteaAuth,
+		auth.NameVk:         s.VkAuth,
+		auth.NameYandex:     s.YandexAuth,
 		auth.NameOIDC:       s.OIDCAuth,
 		auth.NameOIDC + "2": s.OIDC2Auth,
 		auth.NameOIDC + "3": s.OIDC3Auth,
