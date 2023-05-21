@@ -44,6 +44,7 @@ func (t *TestApp) Cleanup() {
 	}
 }
 
+// NewMailClient initializes test app mail client.
 func (t *TestApp) NewMailClient() mailer.Mailer {
 	t.mux.Lock()
 	defer t.mux.Unlock()
@@ -444,6 +445,14 @@ func NewTestApp(optTestDataDir ...string) (*TestApp, error) {
 
 	t.OnFileDownloadRequest().Add(func(e *core.FileDownloadEvent) error {
 		return t.registerEventCall("OnFileDownloadRequest")
+	})
+
+	t.OnFileBeforeTokenRequest().Add(func(e *core.FileTokenEvent) error {
+		return t.registerEventCall("OnFileBeforeTokenRequest")
+	})
+
+	t.OnFileAfterTokenRequest().Add(func(e *core.FileTokenEvent) error {
+		return t.registerEventCall("OnFileAfterTokenRequest")
 	})
 
 	return t, nil
