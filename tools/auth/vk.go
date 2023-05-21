@@ -1,16 +1,12 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/vk"
 )
-
-// Vk Oauth docs: https://dev.vk.com/api/oauth-parameters
 
 var _ Provider = (*Vk)(nil)
 
@@ -23,6 +19,8 @@ type Vk struct {
 }
 
 // NewVkProvider creates new Vk provider instance with some defaults.
+//
+// Docs: https://dev.vk.com/api/oauth-parameters
 func NewVkProvider() *Vk {
 	return &Vk{&baseProvider{
 		scopes:     []string{"email"},
@@ -40,7 +38,6 @@ func (p *Vk) FetchAuthUser(token *oauth2.Token) (*AuthUser, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(p)
 
 	rawUser := map[string]any{}
 	if err := json.Unmarshal(data, &rawUser); err != nil {
@@ -74,12 +71,6 @@ func (p *Vk) FetchAuthUser(token *oauth2.Token) (*AuthUser, error) {
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
 	}
-	fmt.Println(user)
 
 	return user, nil
-}
-
-// FetchToken implements Provider.FetchToken interface.
-func (p *Vk) FetchToken(code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
-	return p.oauth2Config().Exchange(context.Background(), code, opts...)
 }

@@ -18,9 +18,9 @@ type Yandex struct {
 }
 
 // NewYandexProvider creates new Yandex provider instance with some defaults.
+//
+// Docs: https://yandex.ru/dev/id/doc/en/
 func NewYandexProvider() *Yandex {
-	// https://yandex.ru/dev/id/doc/en/
-	// https://yandex.ru/dev/id/doc/en/user-information
 	return &Yandex{&baseProvider{
 		scopes:     []string{"login:email", "login:avatar", "login:info"},
 		authUrl:    yandex.Endpoint.AuthURL,
