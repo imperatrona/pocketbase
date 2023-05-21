@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"golang.org/x/oauth2"
@@ -70,6 +71,11 @@ func (p *Vk) FetchAuthUser(token *oauth2.Token) (*AuthUser, error) {
 		RawUser:      rawUser,
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
+	}
+
+	email := token.Extra("email")
+	if email != nil {
+		user.Email = fmt.Sprint(email)
 	}
 
 	return user, nil
